@@ -1,0 +1,121 @@
+.rst-content .guilabel, .std-term {
+    border: solid 1px #3B3F42;
+    border-radius: 4px;
+    background: #fff;
+    font-weight: bold;
+    padding: 2px 5px;
+    font-size: 75%;
+}
+
+.rst-content code.literal {
+  border: solid 1px #e1e4e5;
+  background: #3B3F4208;
+  color: #404040;
+}
+
+.rst-content .reference {
+  color: #1e5f6e;
+}
+
+.wy-breadcrumbs a {
+  color: #1e5f6e;
+}
+
+.wy-nav-top {
+  background: #1e5f6e;
+}
+
+#search-results .search a {
+  color: #1e5f6e;
+}
+
+.rst-content .highlighted {
+  background: #fcc362;
+}
+
+footer a {
+  color: #1e5f6e;
+}
+
+.wy-nav-side .caption {
+  color: #fcc362 !important;
+}
+
+.wy-nav-side {
+  background: #3B3F42;
+}
+
+.note .admonition-title {
+  background: #1e5f6e !important;
+}
+
+.note {
+  background: #1e5f6e22;
+  display: grid;
+}
+
+.warning .admonition-title {
+  background: #fcc362 !important;
+}
+
+.warning {
+  background: #fcc36222;
+  display: grid;
+}
+
+.admonition-todo .admonition-title  {
+  background: #e0310e !important;
+}
+
+.admonition-todo {
+  background: #e0310e22 !important;
+  display: grid;
+}
+
+
+.highlight {
+    background: #3B3F4208;
+}
+
+.rst-content.style-external-links a.reference.external:after {
+    line-height: 1;
+}
+
+/* fix mobile view: prevent images and tables from overlapping */
+.wy-table-responsive table td, .wy-table-responsive table th {
+    white-space: normal;
+}
+
+.wy-table-responsive {
+    margin-bottom: 24px;
+    max-width: 100%;
+    overflow: visible;
+}
+
+@media screen and (max-width: 767px) {
+  .rst-content .align-right {
+      float: left;
+      margin: 0px 24px 24px 0px;
+  }
+}
+
+.yt {
+  position: relative;
+  padding-bottom: 56.25%;
+  max-width: 100%;
+  height: auto;
+}
+  
+
+@media print {
+
+  iframe {
+    display: none;
+    height: 0px;
+  }
+
+  .yt {
+    height: 10px;
+    padding-bottom: 0;
+  }
+}

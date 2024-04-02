@@ -1,0 +1,109 @@
+image: "registry.gitlab.com/pholthaus/dev-dockerfile/dev:master"
+
+stages:
+  - build
+  - review
+  - deploy
+
+.ssh_config: &ssh_config |
+  eval $(ssh-agent -s)
+  echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+  mkdir -p ~/.ssh
+  echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+  #echo "$SSH_CONFIG" > ~/.ssh/config
+  chmod -R go=,u+rwX ~/.ssh/
+
+.python_config: &python_config |
+  python3 -m venv sphinx
+  source sphinx/bin/activate
+  pip install -r requirements.txt
+
+generate_preview:
+  stage: build
+  only:
+    refs:
+      - merge_requests
+      - master
+  script:
+    - *python_config
+    - find review/ -name "*.in" -exec sh -c 'f="{}"; envsubst < "$f" > ${f%.in}; rm "$f"' \;
+    - mv review/_templates source/
+    - sed -i -e "s/\(\"gitlab_version\".*\)\".*\"/\1\"$CI_COMMIT_REF_SLUG\"/g" source/conf.py
+    - sphinx-build -b html source preview/$CI_COMMIT_REF_SLUG
+  artifacts:
+    name: "$CI_PROJECT_TITLE-$CI_COMMIT_REF_SLUG"
+    expose_as: 'preview'
+    paths:
+    - preview
+
+deploy_preview:
+  stage: review
+  dependencies:
+    - generate_preview
+  environment:
+    name: preview/$CI_COMMIT_REF_SLUG
+    url: https://robothouse.herts.ac.uk/userdocs/$CI_ENVIRONMENT_NAME
+    on_stop: purge_preview
+  only:
+    refs:
+      - merge_requests
+      - master
+  script:
+    - *ssh_config
+    - ssh $RSYNC_HOST mkdir -p $RSYNC_TARGET/$CI_ENVIRONMENT_NAME/
+    - rsync -avz --exclude .htaccess --exclude .htpasswd --delete $CI_ENVIRONMENT_NAME/ $RSYNC_HOST:$RSYNC_TARGET/$CI_ENVIRONMENT_NAME/
+
+purge_preview:
+  stage: review
+  when: manual
+  environment:
+    name: preview/$CI_COMMIT_REF_SLUG
+    action: stop
+  only:
+    refs:
+      - merge_requests
+      - master
+  script:
+    - *ssh_config
+    - ssh $RSYNC_HOST "rm -rf $RSYNC_TARGET/$CI_ENVIRONMENT_NAME/"
+
+generate_production:
+  stage: build
+  only:
+    refs:
+      - master
+  script:
+  - *python_config
+  - sphinx-build -b html source rh-userdocs
+  artifacts:
+    name:  "$CI_PROJECT_TITLE"
+    paths:
+      - rh-userdocs/
+
+deploy_production:
+  stage: deploy
+  dependencies:
+    - generate_production
+  when: manual
+  environment:
+    name: production
+    url: https://robothouse.herts.ac.uk/userdocs/
+  only:
+    refs:
+      - master
+  script:
+    - *ssh_config
+    - rsync -avz --exclude .htaccess --exclude .htpasswd --exclude preview/ --delete rh-userdocs/ $RSYNC_HOST:$RSYNC_TARGET
+
+global_files:
+  stage: deploy
+  when: manual
+  only:
+    refs:
+      - master
+      - merge_requests
+  script:
+  - find ~+/static/ -name "*.in" -exec sh -c 'f="{}"; envsubst < "$f" > ${f%.in}; rm "$f"' \;
+  - find ~+/static/ -name "_*" -exec sh -c 'f="{}"; fn="$(basename "$f")"; mv "$f" "$(dirname "$f")/.${fn#_}"' \;
+  - *ssh_config
+  - rsync -avz static/ $RSYNC_HOST:$RSYNC_TARGET

@@ -1,0 +1,6 @@
+AuthType Basic
+AuthName "Password Protected Area"
+AuthUserFile $RSYNC_TARGET/preview/.htpasswd
+Require valid-user
+
+Options +Indexes

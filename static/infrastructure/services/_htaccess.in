@@ -1,0 +1,4 @@
+AuthType Basic
+AuthName "Robot House user documentation protected area"
+AuthUserFile "$RSYNC_TARGET/.htpasswd"
+Require valid-user
